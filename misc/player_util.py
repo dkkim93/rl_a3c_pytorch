@@ -41,6 +41,7 @@ class Agent(object):
         self.values.append(value)
         self.log_probs.append(log_prob)
         self.rewards.append(self.reward)
+
         return self
 
     def action_test(self):
@@ -68,6 +69,7 @@ class Agent(object):
             with torch.cuda.device(self.gpu_id):
                 self.state = self.state.cuda()
         self.eps_len += 1
+
         return self
 
     def clear_actions(self):
@@ -75,4 +77,5 @@ class Agent(object):
         self.log_probs = []
         self.rewards = []
         self.entropies = []
+
         return self

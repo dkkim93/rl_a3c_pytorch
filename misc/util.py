@@ -55,7 +55,6 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
 
 
 def read_config(file_path):
-    """Read JSON config."""
     json_object = json.load(open(file_path, 'r'))
     return json_object
 

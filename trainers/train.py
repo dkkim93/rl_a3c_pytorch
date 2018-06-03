@@ -1,33 +1,46 @@
 from __future__ import division
-from setproctitle import setproctitle as ptitle
 import torch
 import torch.optim as optim
-from environment import atari_env
-from utils import ensure_shared_grads
-from model import A3Clstm
-from player_util import Agent
+import models
+from setproctitle import setproctitle as ptitle
+from worlds.atari import atari_env
+from misc.util import ensure_shared_grads
+from misc.player_util import Agent
 from torch.autograd import Variable
 
 
 def train(rank, config, shared_model, optimizer, env_conf):
     ptitle('Training Agent: {}'.format(rank))
+
+    # Set GPU
     gpu_id = config.trainer.gpu_ids[rank % len(config.trainer.gpu_ids)]
     torch.manual_seed(config.seed + rank)
     if gpu_id >= 0:
         torch.cuda.manual_seed(config.seed + rank)
+
+    # Set env
     env = atari_env(config.game.env, env_conf, config)
+    env.seed(config.seed + rank)
+
+    # Set optimizer if not specified
     if optimizer is None:
         if config.trainer.optimizer == 'RMSprop':
-            optimizer = optim.RMSprop(shared_model.parameters(), lr=config.trainer.lr)
+            optimizer = optim.RMSprop(
+                shared_model.parameters(),
+                lr=config.trainer.lr)
         if config.trainer.optimizer == 'Adam':
             optimizer = optim.Adam(
-                shared_model.parameters(), lr=config.trainer.lr, amsgrad=config.trainer.amsgrad)
-    env.seed(config.seed + rank)
+                shared_model.parameters(),
+                lr=config.trainer.lr,
+                amsgrad=config.trainer.amsgrad)
+
+    # Set player
     player = Agent(None, env, config, None)
     player.gpu_id = gpu_id
-    player.model = A3Clstm(player.env.observation_space.shape[0],
-                           player.env.action_space)
-
+    player.model = models.load(
+        config,
+        player.env.observation_space.shape[0],
+        player.env.action_space)
     player.state = player.env.reset()
     player.state = torch.from_numpy(player.state).float()
     if gpu_id >= 0:
@@ -36,12 +49,15 @@ def train(rank, config, shared_model, optimizer, env_conf):
             player.model = player.model.cuda()
     player.model.train()
     player.eps_len += 2
+
     while True:
         if gpu_id >= 0:
             with torch.cuda.device(gpu_id):
                 player.model.load_state_dict(shared_model.state_dict())
         else:
             player.model.load_state_dict(shared_model.state_dict())
+
+        # Set LSTM state
         if player.done:
             if gpu_id >= 0:
                 with torch.cuda.device(gpu_id):

@@ -1,13 +1,13 @@
 from __future__ import division
-from setproctitle import setproctitle as ptitle
 import torch
-from environment import atari_env
-from utils import setup_logger
-from model import A3Clstm
-from player_util import Agent
-from torch.autograd import Variable
 import time
 import logging
+import models
+from setproctitle import setproctitle as ptitle
+from worlds.atari import atari_env
+from misc.util import setup_logger
+from misc.player_util import Agent
+from torch.autograd import Variable
 
 
 def test(config, shared_model, env_conf):
@@ -32,8 +32,10 @@ def test(config, shared_model, env_conf):
     reward_total_sum = 0
     player = Agent(None, env, config, None)
     player.gpu_id = gpu_id
-    player.model = A3Clstm(player.env.observation_space.shape[0],
-                           player.env.action_space)
+    player.model = models.load(
+        config,
+        player.env.observation_space.shape[0],
+        player.env.action_space)
 
     player.state = player.env.reset()
     player.eps_len += 2

@@ -3,11 +3,7 @@ import gym
 import numpy as np
 from collections import deque
 from gym.spaces.box import Box
-#from skimage.color import rgb2gray
 from cv2 import resize
-#from skimage.transform import resize
-#from scipy.misc import imresize as resize
-import random
 
 
 def atari_env(env_id, env_conf, config):
@@ -88,7 +84,7 @@ class NoopResetEnv(gym.Wrapper):
         if self.override_num_noops is not None:
             noops = self.override_num_noops
         else:
-            noops = self.unwrapped.np_random.randint(1, self.noop_max + 1)  #pylint: disable=E1101
+            noops = self.unwrapped.np_random.randint(1, self.noop_max + 1)
         assert noops > 0
         obs = None
         for _ in range(noops):
@@ -174,8 +170,10 @@ class MaxAndSkipEnv(gym.Wrapper):
         done = None
         for i in range(self._skip):
             obs, reward, done, info = self.env.step(action)
-            if i == self._skip - 2: self._obs_buffer[0] = obs
-            if i == self._skip - 1: self._obs_buffer[1] = obs
+            if i == self._skip - 2:
+                self._obs_buffer[0] = obs
+            if i == self._skip - 1:
+                self._obs_buffer[1] = obs
             total_reward += reward
             if done:
                 break

@@ -8,7 +8,6 @@ from collections import defaultdict
 class SharedRMSprop(optim.Optimizer):
     """Implements RMSprop algorithm with shared states.
     """
-
     def __init__(self,
                  params,
                  lr=7e-4,
@@ -96,7 +95,6 @@ class SharedRMSprop(optim.Optimizer):
 class SharedAdam(optim.Optimizer):
     """Implements Adam algorithm with shared states.
     """
-
     def __init__(self,
                  params,
                  lr=1e-3,
