@@ -1,0 +1,22 @@
+seed: 1                           # Random seed
+load: False                       # Load a trained model
+log_dir: 'logs/'                  # Folder to save logs
+load_model_dir: 'trained_models/' # Folder to load trained models from
+save_model_dir: 'trained_models/' # Folder to save trained models from
+algorithm:
+    gamma: 0.99                   # Discount factor
+    n_steps: 20                   # Number of forward steps in A3C
+    tau: 1.00                     # Parameter for GAE
+trainer:
+    optimizer: 'Adam'             # Shares optimizer choice
+    lr: 0.0001                    # Learning rate
+    shared_optimizer: True        # Use an optimizer w/o shared statistics
+    amsgrad: True                 # Adam optimizer amsgrad parameter
+    gpu_ids: -1                   # GPU ID to use (-1 for CPU only)
+    n_workers: 4                  # Number of training processes to use
+    save_max: True                # Save model on every test run high score matched or bested
+game:
+    env: 'Pong-v0'                # Environment to train on
+    max_episode_length: 10000     # Max length of an episode
+    crop_config: 'crop.json'      # Environment to crop and resize info
+    skip_rate: 4                  # Frame skip rate

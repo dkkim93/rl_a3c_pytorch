@@ -5,14 +5,14 @@ from torch.autograd import Variable
 
 
 class Agent(object):
-    def __init__(self, model, env, args, state):
+    def __init__(self, model, env, config, state):
         self.model = model
         self.env = env
         self.state = state
         self.hx = None
         self.cx = None
         self.eps_len = 0
-        self.args = args
+        self.config = config
         self.values = []
         self.log_probs = []
         self.rewards = []

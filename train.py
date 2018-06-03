@@ -9,21 +9,21 @@ from player_util import Agent
 from torch.autograd import Variable
 
 
-def train(rank, args, shared_model, optimizer, env_conf):
+def train(rank, config, shared_model, optimizer, env_conf):
     ptitle('Training Agent: {}'.format(rank))
-    gpu_id = args.gpu_ids[rank % len(args.gpu_ids)]
-    torch.manual_seed(args.seed + rank)
+    gpu_id = config.trainer.gpu_ids[rank % len(config.trainer.gpu_ids)]
+    torch.manual_seed(config.seed + rank)
     if gpu_id >= 0:
-        torch.cuda.manual_seed(args.seed + rank)
-    env = atari_env(args.env, env_conf, args)
+        torch.cuda.manual_seed(config.seed + rank)
+    env = atari_env(config.game.env, env_conf, config)
     if optimizer is None:
-        if args.optimizer == 'RMSprop':
-            optimizer = optim.RMSprop(shared_model.parameters(), lr=args.lr)
-        if args.optimizer == 'Adam':
+        if config.trainer.optimizer == 'RMSprop':
+            optimizer = optim.RMSprop(shared_model.parameters(), lr=config.trainer.lr)
+        if config.trainer.optimizer == 'Adam':
             optimizer = optim.Adam(
-                shared_model.parameters(), lr=args.lr, amsgrad=args.amsgrad)
-    env.seed(args.seed + rank)
-    player = Agent(None, env, args, None)
+                shared_model.parameters(), lr=config.trainer.lr, amsgrad=config.trainer.amsgrad)
+    env.seed(config.seed + rank)
+    player = Agent(None, env, config, None)
     player.gpu_id = gpu_id
     player.model = A3Clstm(player.env.observation_space.shape[0],
                            player.env.action_space)
@@ -54,7 +54,7 @@ def train(rank, args, shared_model, optimizer, env_conf):
             player.cx = Variable(player.cx.data)
             player.hx = Variable(player.hx.data)
 
-        for step in range(args.num_steps):
+        for step in range(config.algorithm.n_steps):
             player.action_train()
             if player.done:
                 break
@@ -85,15 +85,15 @@ def train(rank, args, shared_model, optimizer, env_conf):
                 gae = gae.cuda()
         R = Variable(R)
         for i in reversed(range(len(player.rewards))):
-            R = args.gamma * R + player.rewards[i]
+            R = config.algorithm.gamma * R + player.rewards[i]
             advantage = R - player.values[i]
             value_loss = value_loss + 0.5 * advantage.pow(2)
 
             # Generalized Advantage Estimataion
-            delta_t = player.rewards[i] + args.gamma * \
+            delta_t = player.rewards[i] + config.algorithm.gamma * \
                 player.values[i + 1].data - player.values[i].data
 
-            gae = gae * args.gamma * args.tau + delta_t
+            gae = gae * config.algorithm.gamma * config.algorithm.tau + delta_t
 
             policy_loss = policy_loss - \
                 player.log_probs[i] * \

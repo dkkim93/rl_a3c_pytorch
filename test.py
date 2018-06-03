@@ -10,27 +10,27 @@ import time
 import logging
 
 
-def test(args, shared_model, env_conf):
+def test(config, shared_model, env_conf):
     ptitle('Test Agent')
-    gpu_id = args.gpu_ids[-1]
+    gpu_id = config.trainer.gpu_ids[-1]
     log = {}
-    setup_logger('{}_log'.format(args.env), r'{0}{1}_log'.format(
-        args.log_dir, args.env))
-    log['{}_log'.format(args.env)] = logging.getLogger('{}_log'.format(
-        args.env))
-    d_args = vars(args)
+    setup_logger('{}_log'.format(config.game.env), r'{0}{1}_log'.format(
+        config.log_dir, config.game.env))
+    log['{}_log'.format(config.game.env)] = logging.getLogger('{}_log'.format(
+        config.game.env))
+    d_args = vars(config)
     for k in d_args.keys():
-        log['{}_log'.format(args.env)].info('{0}: {1}'.format(k, d_args[k]))
+        log['{}_log'.format(config.game.env)].info('{0}: {1}'.format(k, d_args[k]))
 
-    torch.manual_seed(args.seed)
+    torch.manual_seed(config.seed)
     if gpu_id >= 0:
-        torch.cuda.manual_seed(args.seed)
-    env = atari_env(args.env, env_conf, args)
+        torch.cuda.manual_seed(config.seed)
+    env = atari_env(config.game.env, env_conf, config)
     reward_sum = 0
     start_time = time.time()
     num_tests = 0
     reward_total_sum = 0
-    player = Agent(None, env, args, None)
+    player = Agent(None, env, config, None)
     player.gpu_id = gpu_id
     player.model = A3Clstm(player.env.observation_space.shape[0],
                            player.env.action_space)
@@ -69,24 +69,24 @@ def test(args, shared_model, env_conf):
             num_tests += 1
             reward_total_sum += reward_sum
             reward_mean = reward_total_sum / num_tests
-            log['{}_log'.format(args.env)].info(
+            log['{}_log'.format(config.game.env)].info(
                 "Time {0}, episode reward {1}, episode length {2}, reward mean {3:.4f}".
                 format(
                     time.strftime("%Hh %Mm %Ss",
                                   time.gmtime(time.time() - start_time)),
                     reward_sum, player.eps_len, reward_mean))
 
-            if args.save_max and reward_sum >= max_score:
+            if config.trainer.save_max and reward_sum >= max_score:
                 max_score = reward_sum
                 if gpu_id >= 0:
                     with torch.cuda.device(gpu_id):
                         state_to_save = player.model.state_dict()
                         torch.save(state_to_save, '{0}{1}.dat'.format(
-                            args.save_model_dir, args.env))
+                            config.save_model_dir, config.game.env))
                 else:
                     state_to_save = player.model.state_dict()
                     torch.save(state_to_save, '{0}{1}.dat'.format(
-                        args.save_model_dir, args.env))
+                        config.save_model_dir, config.game.env))
 
             reward_sum = 0
             player.eps_len = 0
