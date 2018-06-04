@@ -105,7 +105,6 @@ class SharedAdam(optim.Optimizer):
 
         for group in self.param_groups:
             for p in group['params']:
-                print(p)
                 state = self.state[p]
                 state['step'] = torch.zeros(1)
                 state['exp_avg'] = p.data.new().resize_as_(p.data).zero_()
