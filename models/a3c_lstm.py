@@ -22,7 +22,10 @@ class A3Clstm(torch.nn.Module):
         self.critic_linear = nn.Linear(512, 1)
         self.actor_linear = nn.Linear(512, num_outputs)
 
-        self.apply(weights_init)  # TODO
+        # Initialize weight for each layer
+        # NOTE similar to Kaiming uniform is applied
+        # ref: https://github.com/pytorch/pytorch/blob/master/torch/nn/init.py
+        self.apply(weights_init)
         relu_gain = nn.init.calculate_gain('relu')
         self.conv1.weight.data.mul_(relu_gain)
         self.conv2.weight.data.mul_(relu_gain)
@@ -40,7 +43,7 @@ class A3Clstm(torch.nn.Module):
         self.lstm.bias_ih.data.fill_(0)
         self.lstm.bias_hh.data.fill_(0)
 
-        self.train()
+        self.train()  # NOTE Sets the module in training mode.
 
     def forward(self, inputs):
         inputs, (hx, cx) = inputs

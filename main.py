@@ -38,12 +38,12 @@ def setup_model(env, config):
             map_location=lambda storage,
             loc: storage)
         shared_model.load_state_dict(saved_state)
-    shared_model.share_memory()
+    shared_model.share_memory()  # NOTE Hogwild style
 
     return shared_model
 
 
-def setup_optimizer(config):
+def setup_optimizer(shared_model, config):
     if config.trainer.shared_optimizer:
         if config.trainer.optimizer == 'RMSprop':
             optimizer = SharedRMSprop(
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     shared_model = setup_model(env, config)
 
     # Set optimizer
-    optimizer = setup_optimizer(config)
+    optimizer = setup_optimizer(shared_model, config)
 
     # Train
     train_model(shared_model, env_conf, optimizer, config)

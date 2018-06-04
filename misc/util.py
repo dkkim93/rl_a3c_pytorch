@@ -77,7 +77,10 @@ def ensure_shared_grads(model, shared_model, gpu=False):
 
 
 def weights_init(m):
+    """Weight initialization for Conv and Linear module""" 
     classname = m.__class__.__name__
+
+    # If Conv nn module
     if classname.find('Conv') != -1:
         weight_shape = list(m.weight.data.size())
         fan_in = np.prod(weight_shape[1:4])
@@ -85,6 +88,8 @@ def weights_init(m):
         w_bound = np.sqrt(6. / (fan_in + fan_out))
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
+
+    # If Linear nn module
     elif classname.find('Linear') != -1:
         weight_shape = list(m.weight.data.size())
         fan_in = weight_shape[1]

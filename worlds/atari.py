@@ -1,7 +1,6 @@
 from __future__ import division
 import gym
 import numpy as np
-from collections import deque
 from gym.spaces.box import Box
 from cv2 import resize
 
@@ -33,6 +32,7 @@ def process_frame(frame, conf):
     frame = resize(frame, (80, conf["dimension2"]))
     frame = resize(frame, (80, 80))
     frame = np.reshape(frame, [1, 80, 80])
+
     return frame
 
 
@@ -139,6 +139,7 @@ class EpisodicLifeEnv(gym.Wrapper):
             # the environment advertises done.
             done = True
         self.lives = lives
+
         return obs, reward, done, self.was_real_done
 
     def reset(self, **kwargs):
@@ -152,6 +153,7 @@ class EpisodicLifeEnv(gym.Wrapper):
             # no-op step to advance from terminal/lost life state
             obs, _, _, _ = self.env.step(0)
         self.lives = self.env.unwrapped.ale.lives()
+
         return obs
 
 

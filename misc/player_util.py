@@ -23,8 +23,9 @@ class Agent(object):
         self.gpu_id = -1
 
     def action_train(self):
-        value, logit, (self.hx, self.cx) = self.model((Variable(
-            self.state.unsqueeze(0)), (self.hx, self.cx)))
+        # Forward-pass
+        value, logit, (self.hx, self.cx) = self.model(
+            (Variable(self.state.unsqueeze(0)), (self.hx, self.cx)))
         prob = F.softmax(logit, dim=1)
         log_prob = F.log_softmax(logit, dim=1)
         entropy = -(log_prob * prob).sum(1)
@@ -46,6 +47,7 @@ class Agent(object):
 
     def action_test(self):
         with torch.no_grad():
+            # Update LSTM state
             if self.done:
                 if self.gpu_id >= 0:
                     with torch.cuda.device(self.gpu_id):
@@ -59,10 +61,12 @@ class Agent(object):
             else:
                 self.cx = Variable(self.cx.data)
                 self.hx = Variable(self.hx.data)
-            value, logit, (self.hx, self.cx) = self.model((Variable(
-                self.state.unsqueeze(0)), (self.hx, self.cx)))
+
+            # Forward-pass
+            value, logit, (self.hx, self.cx) = self.model(
+                (Variable(self.state.unsqueeze(0)), (self.hx, self.cx)))
         prob = F.softmax(logit, dim=1)
-        action = prob.max(1)[1].data.cpu().numpy()
+        action = prob.max(1)[1].data.cpu().numpy()  # NOTE greedy action selected for test case
         state, self.reward, self.done, self.info = self.env.step(action[0])
         self.state = torch.from_numpy(state).float()
         if self.gpu_id >= 0:
