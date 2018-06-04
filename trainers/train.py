@@ -70,6 +70,8 @@ def train(rank, config, shared_model, optimizer, env_conf):
             player.cx = Variable(player.cx.data)
             player.hx = Variable(player.hx.data)
 
+        # In the paper: "The policy and the value function are updated every
+        # tmmax actions or when a terminal state is reached"
         for step in range(config.algorithm.n_steps):
             player.action_train()
             if player.done:
@@ -84,9 +86,9 @@ def train(rank, config, shared_model, optimizer, env_conf):
 
         R = torch.zeros(1, 1)
         if not player.done:
-            value, _, _ = player.model((Variable(player.state.unsqueeze(0)),
-                                        (player.hx, player.cx)))
-            R = value.data
+            value, _, _ = player.model(
+                (Variable(player.state.unsqueeze(0)), (player.hx, player.cx)))
+            R = value.data  # For non-terminal s_t, Bootstrap from last state
 
         if gpu_id >= 0:
             with torch.cuda.device(gpu_id):
@@ -102,19 +104,26 @@ def train(rank, config, shared_model, optimizer, env_conf):
         R = Variable(R)
         for i in reversed(range(len(player.rewards))):
             R = config.algorithm.gamma * R + player.rewards[i]
+
+            # Set value loss (critic loss)
             advantage = R - player.values[i]
             value_loss = value_loss + 0.5 * advantage.pow(2)
 
             # Generalized Advantage Estimataion
-            delta_t = player.rewards[i] + config.algorithm.gamma * \
-                player.values[i + 1].data - player.values[i].data
+            delta_t = \
+                player.rewards[i] + \
+                config.algorithm.gamma * player.values[i + 1].data - \
+                player.values[i].data
 
             gae = gae * config.algorithm.gamma * config.algorithm.tau + delta_t
 
-            policy_loss = policy_loss - \
-                player.log_probs[i] * \
-                Variable(gae) - 0.01 * player.entropies[i]
+            # Set policy loss (actor loss)
+            policy_loss = \
+                policy_loss - \
+                player.log_probs[i] * Variable(gae) - \
+                0.01 * player.entropies[i]
 
+        # Update network
         player.model.zero_grad()
         (policy_loss + 0.5 * value_loss).backward()
         ensure_shared_grads(player.model, shared_model, gpu=gpu_id >= 0)

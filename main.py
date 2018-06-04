@@ -64,12 +64,14 @@ def setup_optimizer(shared_model, config):
 def train_model(shared_model, env_conf, optimizer, config):
     processes = []
 
+    # Test process for evaluating training performance
     p = mp.Process(
         target=test, args=(config, shared_model, env_conf))
     p.start()
     processes.append(p)
     time.sleep(0.1)
 
+    # Multi-thread train processes
     for rank in range(0, config.trainer.n_workers):
         p = mp.Process(
             target=train, args=(rank, config, shared_model, optimizer, env_conf))
