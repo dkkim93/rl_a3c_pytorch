@@ -14,7 +14,7 @@ trainer:
     shared_optimizer: True        # Use an optimizer w/o shared statistics
     amsgrad: True                 # Adam optimizer amsgrad parameter
     gpu_ids: -1                   # GPU ID to use (-1 for CPU only)
-    n_workers: 8                  # Number of training processes to use
+    n_workers: 32                  # Number of training processes to use
     save_max: True                # Save model on every test run high score matched or bested
 game:
     env: 'Pong-v0'                # Environment to train on
